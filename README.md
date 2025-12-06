@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
-[![Security](https://img.shields.io/badge/security-scanning-green.svg)](https://github.com/manojisnow/cerebrus)
+[![Security](https://img.shields.io/badge/security-scanning-green.svg)](https://github.com/manojisnow/cerberus)
 
 ## Overview
 
@@ -30,7 +30,7 @@ Cerberus is a Docker-based security scanner that provides comprehensive security
 ### 1. Build the Docker Image
 
 ```bash
-git clone https://github.com/manojisnow/cerebrus.git
+git clone https://github.com/manojisnow/cerberus.git
 cd cerberus
 docker build -t cerberus:latest .
 ```
