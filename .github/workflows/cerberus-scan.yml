@@ -26,7 +26,7 @@ jobs:
       - name: Run Cerberus Security Scanner
         run: |
           mkdir -p reports
-          docker run --rm \
+          docker run --rm --user root \
             -v ${{ github.workspace }}:${{ github.workspace }}:ro \
             -v ${{ github.workspace }}/reports:/cerberus/reports \
             cerberus:latest ${{ github.workspace }} --config config.yaml
