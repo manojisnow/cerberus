@@ -38,11 +38,11 @@ jobs:
           name: cerberus-reports
           path: reports/
       
-      - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: reports/cerberus_report.sarif
+      - name: Prepare Report for Summary
+        run: |
+          # Find the generated JSON report (ignoring timestamp) and copy to fixed name
+          find reports -name "cerberus_report_*.json" -exec cp {} reports/cerberus_report.json \;
+          ls -l reports/
       
       - name: Comment PR with summary
         if: github.event_name == 'pull_request'
