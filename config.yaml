@@ -1,0 +1,99 @@
+# Cerberus Security Scanner Configuration
+
+# Build Configuration
+build:
+  # Whether to build artifacts before scanning (true) or use pre-built artifacts (false)
+  enabled: true
+  # Build tool to use: auto-detect, maven, gradle
+  tool: auto
+  # Build command override (optional)
+  # command: "mvn clean package -DskipTests"
+
+# Scanner Configuration
+scanners:
+  # Source Code Scanners
+  secrets:
+    enabled: true
+    tools:
+      - gitleaks
+  
+  sast:
+    enabled: true
+    tools:
+      - semgrep
+      - spotbugs  # Includes FindSecBugs
+  
+  dependencies:
+    enabled: true
+    tools:
+      - trivy
+    # OWASP Dependency-Check disabled by default due to database initialization requirements
+    # To enable, add 'owasp-dependency-check' to tools list and ensure NVD database is initialized
+    # NVD API key for faster OWASP Dependency-Check updates (optional)
+    nvd_api_key: ""
+  
+  iac:
+    enabled: true
+    tools:
+      - trivy
+      - checkov
+  
+  # Artifact Scanners
+  containers:
+    enabled: true
+    tools:
+      - trivy
+      - grype
+  
+  helm:
+    enabled: true
+    tools:
+      - kubescan
+      - kubeaudit
+      - helm-lint
+      - trivy
+  
+  linting:
+    enabled: true
+    tools:
+      - hadolint  # Dockerfile linting
+
+# Severity Thresholds
+severity:
+  # Fail the scan if vulnerabilities at or above this level are found
+  # Options: CRITICAL, HIGH, MEDIUM, LOW, UNKNOWN
+  fail_on: HIGH
+  
+  # Report only vulnerabilities at or above this level
+  report_threshold: MEDIUM
+
+# Reporting Configuration
+reporting:
+  formats:
+    - json
+    - html
+    - markdown
+  
+  output_dir: "./reports"
+  
+  # Include detailed remediation guidance
+  include_remediation: true
+  
+  # Generate executive summary
+  executive_summary: true
+
+# Repository Configuration
+repository:
+  # Temporary directory for cloning repositories
+  temp_dir: "/tmp/cerberus"
+  
+  # Clean up temporary files after scan
+  cleanup: true
+
+# Performance Configuration
+performance:
+  # Maximum number of scanners to run in parallel
+  max_parallel_scanners: 3
+  
+  # Timeout for individual scanner execution (seconds)
+  scanner_timeout: 1800  # 30 minutes

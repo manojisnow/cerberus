@@ -1,0 +1,35 @@
+# Simplified Dockerfile for testing
+# This version focuses on core functionality rather than all tools
+
+FROM python:3.11-slim
+
+# Install minimal system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /cerberus
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application
+COPY . /cerberus/
+
+# Create reports directory
+RUN mkdir -p /cerberus/reports
+
+# Make cerberus.py executable
+RUN chmod +x /cerberus/cerberus.py
+
+# Create non-root user
+RUN useradd -m -u 1000 cerberus && \
+    chown -R cerberus:cerberus /cerberus
+
+USER cerberus
+
+ENTRYPOINT ["python3", "/cerberus/cerberus.py"]
+CMD ["--help"]

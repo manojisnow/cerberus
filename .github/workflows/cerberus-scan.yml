@@ -1,0 +1,89 @@
+name: Cerberus Security Scan
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Build Cerberus
+        run: docker build -t cerberus:latest .
+      
+      - name: Run Cerberus Security Scanner
+        run: |
+          mkdir -p reports
+          docker run --rm \
+            -v ${{ github.workspace }}:${{ github.workspace }}:ro \
+            -v ${{ github.workspace }}/reports:/cerberus/reports \
+            cerberus:latest ${{ github.workspace }} --config config.yaml
+      
+      - name: Upload scan results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cerberus-reports
+          path: reports/
+      
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: reports/cerberus_report.sarif
+      
+      - name: Comment PR with summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('reports/cerberus_report.json', 'utf8'));
+            
+            const summary = report.summary;
+            let comment = '## 🐕 Cerberus Security Scan Results\n\n';
+            comment += '| Category | Critical | High | Medium | Low |\n';
+            comment += '|----------|----------|------|--------|-----|\n';
+            
+            for (const [category, counts] of Object.entries(summary)) {
+              comment += `| ${category} | ${counts.critical || 0} | ${counts.high || 0} | ${counts.medium || 0} | ${counts.low || 0} |\n`;
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+      
+      - name: Check severity threshold
+        run: |
+          # Fail if critical or high severity issues found
+          python3 -c "
+          import json
+          import sys
+          
+          with open('reports/cerberus_report.json') as f:
+              report = json.load(f)
+          
+          critical = sum(s.get('critical', 0) for s in report['summary'].values())
+          high = sum(s.get('high', 0) for s in report['summary'].values())
+          
+          if critical > 0 or high > 0:
+              print(f'❌ Found {critical} critical and {high} high severity issues')
+              sys.exit(1)
+          else:
+              print('✅ No critical or high severity issues found')
+          "

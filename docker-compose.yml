@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  cerberus:
+    build: .
+    image: cerberus:latest
+    container_name: cerberus-scanner
+    volumes:
+      # Mount local repository to scan
+      - ./target-repo:/scan:ro
+      # Mount output directory for reports
+      - ./reports:/cerberus/reports
+      # Mount custom config (optional)
+      - ./config.yaml:/cerberus/config.yaml:ro
+    environment:
+      # Optional: NVD API key for faster OWASP Dependency-Check
+      - NVD_API_KEY=${NVD_API_KEY:-}
+    command: /scan --config /cerberus/config.yaml
+
+# Usage:
+# 1. Place repository to scan in ./target-repo
+# 2. Run: docker-compose up
+# 3. Reports will be in ./reports directory
