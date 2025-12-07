@@ -11,7 +11,17 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # Default install directory
-INSTALL_DIR="/usr/local/bin"
+if [ -w "/usr/local/bin" ]; then
+    INSTALL_DIR="/usr/local/bin"
+    USE_SUDO=false
+else
+    INSTALL_DIR="$HOME/.local/bin"
+    mkdir -p "$INSTALL_DIR"
+    USE_SUDO=false
+    # Check if we need run_priv for /usr/local/bin if we wanted to force it, 
+    # but let's default to user dir for safety in scripts
+fi
+
 CERBERUS_HOME="$HOME/.cerberus"
 
 # Versions (matching Dockerfile)
@@ -24,6 +34,14 @@ SPOTBUGS_VERSION="4.8.3"
 
 log() {
     echo -e "${BLUE}[CERBERUS]${NC} $1"
+}
+
+run_priv() {
+    if [ "$USE_SUDO" = true ]; then
+        sudo "$@"
+    else
+        "$@"
+    fi
 }
 
 error() {
@@ -123,7 +141,7 @@ install_tools() {
         log "Installing Gitleaks $GITLEAKS_VERSION..."
         wget -q "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_${OS_TYPE}_${GITLEAKS_ARCH}.tar.gz"
         tar -xzf "gitleaks_${GITLEAKS_VERSION}_${OS_TYPE}_${GITLEAKS_ARCH}.tar.gz"
-        sudo mv gitleaks "$INSTALL_DIR/"
+        run_priv mv gitleaks "$INSTALL_DIR/"
     fi
     
     # 4. Hadolint
@@ -136,7 +154,7 @@ install_tools() {
             wget -q "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64" -O hadolint
         fi
         chmod +x hadolint
-        sudo mv hadolint "$INSTALL_DIR/"
+        run_priv mv hadolint "$INSTALL_DIR/"
     fi
     
     # 5. Kubescape
@@ -152,7 +170,7 @@ install_tools() {
     tar -xzf "spotbugs-${SPOTBUGS_VERSION}.tgz" -C "$CERBERUS_HOME/spotbugs" --strip-components=1
     
     # Link SpotBugs
-    sudo ln -sf "$CERBERUS_HOME/spotbugs/bin/spotbugs" "$INSTALL_DIR/spotbugs"
+    run_priv ln -sf "$CERBERUS_HOME/spotbugs/bin/spotbugs" "$INSTALL_DIR/spotbugs"
     
     # Cleanup
     cd - > /dev/null
@@ -164,6 +182,7 @@ setup_cerberus() {
     log "Setting up Cerberus..."
     
     # Copy source code to ~/.cerberus/src
+    rm -rf "$CERBERUS_HOME/src"
     mkdir -p "$CERBERUS_HOME/src"
     cp -r . "$CERBERUS_HOME/src/"
     
@@ -175,7 +194,7 @@ python3 "$CERBERUS_HOME/src/cerberus.py" "\$@"
 EOF
     
     chmod +x cerberus_wrapper
-    sudo mv cerberus_wrapper "$INSTALL_DIR/cerberus"
+    run_priv mv cerberus_wrapper "$INSTALL_DIR/cerberus"
 }
 
 # Main
