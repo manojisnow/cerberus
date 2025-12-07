@@ -37,36 +37,32 @@ docker run --rm -v $(pwd):/repo cerberus:latest /repo
 Install Cerberus and all tools directly on your system (Linux/macOS):
 
 ```bash
-curl -sfL https://raw.githubusercontent.com/manojisnow/cerberus/main/install.sh | sudo bash
+curl -sfL https://raw.githubusercontent.com/manojisnow/cerberus/main/install.sh | bash
 ```
 
-This will install:
-- Cerberus CLI (`cerberus`)
-- All security tools (Trivy, Gitleaks, etc.)
-- Python dependencies
+This will install everything to `~/.cerberus` (isolated from your system):
+- Tools in `~/.cerberus/bin`
+- Python venv in `~/.cerberus/venv`
 
 **Usage:**
+Add the bin directory to your PATH:
 ```bash
-# Scan a repository
-cerberus /path/to/repo
-
-# Use the default configuration included with installation
-cerberus /path/to/repo --config ~/.cerberus/src/config.yaml
+export PATH="$HOME/.cerberus/bin:$PATH"
 ```
 
-- Python dependencies
+Then run:
+```bash
+cerberus /path/to/repo
+```
 
 ### Uninstallation
-To remove Cerberus and optionally its dependencies:
+To remove Cerberus cleanly:
 
 ```bash
 curl -sfL https://raw.githubusercontent.com/manojisnow/cerberus/main/uninstall.sh | bash
 ```
 
-This script will:
-1. Remove Cerberus binary and configuration
-2. Prompt you to remove shared tools (Trivy, Gitleaks, etc.)
-3. Prompt you to remove Python dependencies
+This simply removes the `~/.cerberus` directory. No other files are touched.
 
 ## Quick Start
 
