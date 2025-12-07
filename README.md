@@ -45,6 +45,15 @@ This will install:
 - All security tools (Trivy, Gitleaks, etc.)
 - Python dependencies
 
+**Usage:**
+```bash
+# Scan a repository
+cerberus /path/to/repo
+
+# Use the default configuration included with installation
+cerberus /path/to/repo --config ~/.cerberus/src/config.yaml
+```
+
 ## Quick Start
 
 ### 1. Build the Docker Image
@@ -64,7 +73,7 @@ docker build -t cerberus:latest .
 # Or use Docker directly
 docker run --rm \
   --tmpfs /tmp:rw,exec,size=4g \
-  -v /path/to/repo:/path/to/repo:ro \
+  -v /path/to/repo:/path/to/repo \
   -v $(pwd)/reports:/cerberus/reports \
   cerberus:latest /path/to/repo
 ```
@@ -158,7 +167,7 @@ jobs:
         run: |
           docker build -t cerberus:latest .
           docker run --rm \
-            -v ${{ github.workspace }}:${{ github.workspace }}:ro \
+            -v ${{ github.workspace }}:${{ github.workspace }} \
             -v ${{ github.workspace }}/reports:/cerberus/reports \
             cerberus:latest ${{ github.workspace }}
       
@@ -230,6 +239,7 @@ reporting:
 ```
 cerberus/
 ├── cerberus.py           # Main orchestrator
+├── install.sh            # Standalone installer
 ├── Dockerfile            # Production Docker image
 ├── config.yaml           # Default configuration
 ├── scan-repo.sh          # Convenience script
