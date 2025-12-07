@@ -54,6 +54,20 @@ cerberus /path/to/repo
 cerberus /path/to/repo --config ~/.cerberus/src/config.yaml
 ```
 
+- Python dependencies
+
+### Uninstallation
+To remove Cerberus and optionally its dependencies:
+
+```bash
+curl -sfL https://raw.githubusercontent.com/manojisnow/cerberus/main/uninstall.sh | bash
+```
+
+This script will:
+1. Remove Cerberus binary and configuration
+2. Prompt you to remove shared tools (Trivy, Gitleaks, etc.)
+3. Prompt you to remove Python dependencies
+
 ## Quick Start
 
 ### 1. Build the Docker Image
