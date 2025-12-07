@@ -228,6 +228,19 @@ cerberus/
 └── docs/                 # Documentation
 ```
 
+## Security & Privacy
+
+Cerberus is designed to be safe and transparent:
+
+1.  **Local Execution**: All scanning happens locally within the Docker container. No source code or reports are uploaded to any external server.
+2.  **Network Usage**: The container only connects to the internet to:
+    *   Download vulnerability database updates (Trivy, Grype).
+    *   Download project dependencies (Maven, Gradle) during the build phase.
+3.  **Volume Mounts**:
+    *   **Repository**: Mounted as Read-Write to allow the build process (e.g., `mvn package`) to create artifacts in `target/`.
+    *   **Maven Cache**: `~/.m2` is mounted to share your local dependency cache, speeding up builds and using your configured repositories.
+4.  **Permissions**: The container runs as a non-root user (`cerberus`) by default to minimize risk.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
