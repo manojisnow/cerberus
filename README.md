@@ -25,6 +25,26 @@ Cerberus is a Docker-based security scanner that provides comprehensive security
 ✅ **Docker-based** - No local tool installation required  
 ✅ **Formatted Output** - Clean tables instead of raw JSON  
 
+## Installation
+
+### Option 1: Docker (Recommended)
+No installation required! Just run the container:
+```bash
+docker run --rm -v $(pwd):/repo cerberus:latest /repo
+```
+
+### Option 2: Standalone Installation
+Install Cerberus and all tools directly on your system (Linux/macOS):
+
+```bash
+curl -sfL https://raw.githubusercontent.com/manojisnow/cerberus/main/install.sh | sudo bash
+```
+
+This will install:
+- Cerberus CLI (`cerberus`)
+- All security tools (Trivy, Gitleaks, etc.)
+- Python dependencies
+
 ## Quick Start
 
 ### 1. Build the Docker Image
