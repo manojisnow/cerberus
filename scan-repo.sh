@@ -12,14 +12,22 @@ mkdir -p $(pwd)/cache/trivy
 mkdir -p $(pwd)/cache/semgrep
 mkdir -p $(pwd)/cache/home
 
+# Check for local Maven cache
+M2_ARGS=""
+if [ -d "$HOME/.m2" ]; then
+    echo "📦 Detected local Maven cache, mounting..."
+    M2_ARGS="-v $HOME/.m2:/home/cerberus/.m2"
+fi
+
 # Mount repository to same path in container to preserve paths in reports
 docker run --rm \
   --tmpfs /tmp:rw,exec,size=4g \
-  -v "$REPO_PATH:$REPO_PATH:ro" \
+  -v "$REPO_PATH:$REPO_PATH" \
   -v $(pwd)/reports:/cerberus/reports \
   -v $(pwd)/cache/trivy:/home/cerberus/.cache/trivy \
   -v $(pwd)/cache/semgrep:/home/cerberus/.cache/semgrep \
   -v $(pwd)/cache/home:/home/cerberus/.cache \
+  $M2_ARGS \
   -e TRIVY_CACHE_DIR=/home/cerberus/.cache/trivy \
   cerberus:latest "$REPO_PATH"
 

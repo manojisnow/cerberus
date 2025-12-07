@@ -156,7 +156,7 @@ class ArtifactDetector:
                 print(f"   ✓ Maven build successful")
                 return True
             else:
-                print(f"   ✗ Maven build failed: {result.stderr[:200]}")
+                print(f"   ✗ Maven build failed: {result.stderr[:500]}")
                 return False
                 
         except subprocess.TimeoutExpired:
