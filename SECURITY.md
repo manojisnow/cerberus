@@ -15,7 +15,7 @@ We take the security of Cerberus seriously. If you believe you have found a secu
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them via email to `security@example.com` (replace with your email).
+Instead, please use the "Report a vulnerability" button in the Security tab of this repository. This allows you to privately disclose the issue to the maintainers.
 
 You should receive a response within 48 hours. If for some reason you do not, please follow up via email to ensure we received your original message.
 
