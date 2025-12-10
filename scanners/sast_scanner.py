@@ -81,15 +81,22 @@ class SASTScanner:
     
     def _run_spotbugs(self, jar_files: List[str]) -> Dict:
         """Run SpotBugs with FindSecBugs plugin"""
+        import tempfile
+        import os
+        
         all_findings = []
         
         for jar_file in jar_files:
+            # Create a unique temporary file for the report
+            with tempfile.NamedTemporaryFile(suffix='.xml', delete=False) as tmp_file:
+                report_path = tmp_file.name
+            
             try:
                 cmd = [
                     'spotbugs',
                     '-textui',
                     '-xml:withMessages',
-                    '-output', '/tmp/spotbugs-report.xml',
+                    '-output', report_path,
                     jar_file
                 ]
                 
@@ -103,10 +110,12 @@ class SASTScanner:
                 # SpotBugs returns 0 even with findings
                 if result.returncode == 0:
                     # Parse XML output (simplified - would need proper XML parsing)
+                    # In a real implementation we would parse the XML at report_path
                     all_findings.append({
                         'jar': jar_file,
                         'status': 'completed',
-                        'output': result.stdout
+                        'output': result.stdout,
+                        'report_file': report_path  # Keep reference if needed for detailed parsing
                     })
                 else:
                     all_findings.append({
@@ -122,6 +131,8 @@ class SASTScanner:
                     'status': 'timeout'
                 })
             except FileNotFoundError:
+                if os.path.exists(report_path):
+                    os.unlink(report_path)
                 return {'error': 'SpotBugs not installed', 'status': 'not_installed'}
             except Exception as e:
                 all_findings.append({
@@ -129,5 +140,9 @@ class SASTScanner:
                     'error': str(e),
                     'status': 'error'
                 })
+            finally:
+                # Cleanup the temp file
+                if os.path.exists(report_path):
+                    os.unlink(report_path)
         
         return {'findings': all_findings, 'status': 'completed'}
