@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
     tar \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Syft (for SBOM and Dependency Consistency)
+RUN curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
 WORKDIR /cerberus
 
 # Install Python dependencies

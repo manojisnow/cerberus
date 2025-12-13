@@ -58,9 +58,25 @@ detect_platform() {
 }
 
 setup_dirs() {
-    log "Creating directory structure in $CERBERUS_HOME..."
+    log "Cleaning up old installation..."
+    
+    # Backup reports if they exist
+    if [ -d "$CERBERUS_HOME/reports" ]; then
+        log "Backing up reports..."
+        mv "$CERBERUS_HOME/reports" "/tmp/cerberus_reports_backup_$$"
+    fi
+
+    # Wipe clean to ensure fresh install
     rm -rf "$CERBERUS_HOME"
+    
+    log "Creating directory structure in $CERBERUS_HOME..."
     mkdir -p "$INSTALL_DIR" "$SRC_DIR"
+
+    # Restore reports
+    if [ -d "/tmp/cerberus_reports_backup_$$" ]; then
+        log "Restoring reports..."
+        mv "/tmp/cerberus_reports_backup_$$" "$CERBERUS_HOME/reports"
+    fi
 }
 
 setup_venv() {
@@ -98,7 +114,6 @@ install_tools() {
     else
         wget -q "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64" -O "$INSTALL_DIR/hadolint"
     fi
-    chmod +x "$INSTALL_DIR/hadolint"
 
     # Kubescape
     log "Installing Kubescape..."
@@ -110,18 +125,36 @@ install_tools() {
 
     # SpotBugs
     log "Installing SpotBugs..."
+    # Ensure dir exists
     mkdir -p "$CERBERUS_HOME/spotbugs"
     wget -q "https://github.com/spotbugs/spotbugs/releases/download/${SPOTBUGS_VERSION}/spotbugs-${SPOTBUGS_VERSION}.tgz"
     tar -xzf "spotbugs-${SPOTBUGS_VERSION}.tgz" -C "$CERBERUS_HOME/spotbugs" --strip-components=1
-    ln -sf "$CERBERUS_HOME/spotbugs/bin/spotbugs" "$INSTALL_DIR/spotbugs"
+    # Check if target exists before linking to avoid error
+    if [ -f "$CERBERUS_HOME/spotbugs/bin/spotbugs" ]; then
+        ln -sf "$CERBERUS_HOME/spotbugs/bin/spotbugs" "$INSTALL_DIR/spotbugs"
+    fi
     
-    # Cleanup
+    # Syft
+    log "Installing Syft..."
+    curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b "$INSTALL_DIR" > /dev/null 2>&1
+
+    # Cleanup downloads
     cd - > /dev/null
     rm -rf "$TMP_DIR"
+
+    # Final Permission Check
+    log "Setting permissions..."
+    chmod +x "$INSTALL_DIR/trivy" 2>/dev/null || true
+    chmod +x "$INSTALL_DIR/grype" 2>/dev/null || true
+    chmod +x "$INSTALL_DIR/gitleaks" 2>/dev/null || true
+    chmod +x "$INSTALL_DIR/hadolint" 2>/dev/null || true
+    chmod +x "$INSTALL_DIR/kubescape" 2>/dev/null || true
+    chmod +x "$INSTALL_DIR/spotbugs" 2>/dev/null || true
+    chmod +x "$CERBERUS_HOME/spotbugs/bin/spotbugs" 2>/dev/null || true
 }
 
 setup_cerberus() {
-    log "Installing Cerberus..."
+    log "Installing Cerberus Source..."
     # Copy source code (excluding .git and other artifacts)
     # We use a loop to copy specific files/dirs to avoid .git permission issues
     cp cerberus.py "$SRC_DIR/"
@@ -143,12 +176,17 @@ EOF
 main() {
     check_prereqs
     detect_platform
+    # Step 1: Clean and Setup Dirs (Backup reports)
     setup_dirs
+    # Step 2: Venv
     setup_venv
+    # Step 3: Tools (Consolidated)
     install_tools
+    # Step 4: Code
     setup_cerberus
     
     success "Cerberus installed to $CERBERUS_HOME"
+    echo "✅ Tools installed successfully!"
     echo "Please add the following to your shell config (.bashrc/.zshrc):"
     echo "export PATH=\"$INSTALL_DIR:\$PATH\""
 }

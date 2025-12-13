@@ -22,6 +22,7 @@ from scanners.iac_scanner import IaCScanner
 from scanners.container_scanner import ContainerScanner
 from scanners.helm_scanner import HelmScanner
 from scanners.lint_scanner import LintScanner
+from scanners.consistency_scanner import ConsistencyScanner
 
 
 class Cerberus:
@@ -56,7 +57,9 @@ class Cerberus:
                 'iac': {'enabled': True},
                 'containers': {'enabled': True},
                 'helm': {'enabled': True},
-                'linting': {'enabled': True}
+                'helm': {'enabled': True},
+                'linting': {'enabled': True},
+                'consistency': {'enabled': True}
             },
             'severity': {'fail_on': 'HIGH', 'report_threshold': 'MEDIUM'},
             'reporting': {
@@ -187,6 +190,12 @@ class Cerberus:
             click.echo("   ✨ Running linting checks...")
             scanner = LintScanner(self.config)
             self.results['linting'] = scanner.scan(repo_path, artifacts)
+
+        # Consistency Scanner
+        if scanners_config.get('consistency', {}).get('enabled', True):
+            click.echo("   🔗 Checking Dependency Consistency (Diamond Dependencies)...")
+            scanner = ConsistencyScanner(self.config)
+            self.results['consistency'] = scanner.scan(repo_path, artifacts)
     
     def _generate_reports(self, repo_path: str):
         """Generate all configured report formats"""

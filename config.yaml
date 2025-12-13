@@ -57,6 +57,11 @@ scanners:
     enabled: true
     tools:
       - hadolint  # Dockerfile linting
+  
+  consistency:
+    enabled: true
+    tools:
+      - conftest # Example tool for consistency checks
 
 # Severity Thresholds
 severity:

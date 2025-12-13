@@ -118,6 +118,18 @@ class ReportGenerator:
                 md_content += "\n#### Checkov\n"
                 md_content += ReportFormatter.format_checkov_results_markdown(results['iac']['checkov'])
         
+        if 'consistency' in results and results['consistency']:
+            md_content += "\n### DEPENDENCY CONSISTENCY\n\n"
+            findings = results['consistency'].get('findings', [])
+            if findings:
+                for finding in findings:
+                    md_content += f"**{finding['package']}** ({finding['type']})\n"
+                    md_content += f"- **Severity**: {finding['severity']}\n"
+                    md_content += f"- **Versions**: {', '.join(finding['versions'])}\n"
+                    md_content += f"- **Remediation**: {finding['remediation']}\n\n"
+            else:
+                md_content += "No consistency issues found.\n\n"
+        
         # Add other scanners as JSON for now
         for scanner_name in ['sast', 'linting']:
             if scanner_name in results and results[scanner_name]:
@@ -345,6 +357,36 @@ class ReportGenerator:
             {% if results['iac'].get('checkov') %}
                 <h4>Checkov</h4>
                 {{ checkov_html | safe }}
+            {% endif %}
+        {% endif %}
+
+        {% if results.get('consistency') %}
+            <h3>DEPENDENCY CONSISTENCY</h3>
+            {% if results['consistency'].get('findings') %}
+                <div class="vuln-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Package</th>
+                            <th>Versions Detected</th>
+                            <th>Severity</th>
+                            <th>Remediation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for finding in results['consistency']['findings'] %}
+                        <tr>
+                            <td>{{ finding.package }} ({{ finding.type }})</td>
+                            <td>{{ ", ".join(finding.versions) }}</td>
+                            <td class="severity-medium">{{ finding.severity }}</td>
+                            <td>{{ finding.remediation }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            {% else %}
+                <p>No consistency issues found.</p>
             {% endif %}
         {% endif %}
         
