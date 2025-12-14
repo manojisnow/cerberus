@@ -12,30 +12,42 @@
 
 ## Overview
 
-Cerberus is a Docker-based security scanner that provides comprehensive security analysis for Java projects. It integrates 6 industry-standard security tools to detect vulnerabilities across multiple layers:
+Cerberus is a Docker-based security scanner that provides comprehensive security analysis for Java projects and containerized applications. It integrates 10+ industry-standard security tools to detect vulnerabilities across multiple layers:
 
 - **Secrets Detection** - Find hardcoded credentials and API keys
 - **SAST** - Static application security testing
 - **Dependency Scanning** - Identify vulnerable dependencies
 - **IaC Security** - Scan infrastructure-as-code files
+- **Container Scanning** - Analyze Docker images for vulnerabilities
+- **Helm Chart Security** - Scan Kubernetes Helm charts
 - **Dockerfile Linting** - Best practices for container images
+- **Dependency Consistency** - Detect version conflicts and diamond dependencies
 
 ## Features
 
-✅ **6 Security Tools** - Gitleaks, Semgrep, SpotBugs, Trivy, Checkov, Hadolint  
-✅ **Beautiful Reports** - HTML, Markdown, and JSON formats  
-✅ **Fast Scans** - ~2.5 minutes for comprehensive analysis  
+✅ **10+ Security Tools** - Gitleaks, Semgrep, SpotBugs, Trivy, Checkov, Hadolint, Grype, Kubescape, Kubeaudit, Helm, Syft  
+✅ **Multi-Layer Scanning** - Secrets, SAST, Dependencies, IaC, Containers, Helm Charts, Linting  
+✅ **Container Image Scanning** - Trivy & Grype for built Docker images  
+✅ **Helm Chart Security** - Kubescape, Kubeaudit, Helm lint, and Trivy for Kubernetes deployments  
+✅ **Dependency Consistency** - Detects diamond dependencies and version conflicts via SBOM analysis  
+✅ **SBOM Generation** - Software Bill of Materials via Syft for supply chain visibility  
+✅ **Beautiful Reports** - HTML, Markdown, and JSON formats with remediation guidance  
+✅ **Fast Scans** - ~2.5 minutes for comprehensive analysis with parallel execution  
 ✅ **CI/CD Ready** - GitHub Actions workflow included  
 ✅ **Docker-based** - No local tool installation required  
+✅ **Remote Repository Support** - Scan directly from GitHub/GitLab URLs  
 ✅ **Smart Builds** - Auto-builds Maven/Gradle projects & Dockerfiles for deeper analysis  
 ✅ **Formatted Output** - Clean tables instead of raw JSON  
+✅ **Configurable Severity** - Customizable thresholds and fail-on-severity levels  
+✅ **Executive Summary** - High-level overview for stakeholders  
 
 ## Installation
 
 ### Option 1: Docker (Recommended)
-No installation required! Just run the container:
+No installation required! Just pull and run the container:
 ```bash
-docker run --rm -v $(pwd):/repo cerberus:latest /repo
+docker pull dumanoj/cerberus:latest
+docker run --rm -v $(pwd):/repo dumanoj/cerberus:latest /repo
 ```
 
 ### Option 2: Standalone Installation
@@ -71,8 +83,14 @@ This simply removes the `~/.cerberus` directory. No other files are touched.
 
 ## Quick Start
 
-### 1. Build the Docker Image
+### 1. Pull or Build the Docker Image
 
+**Option A: Pull from Docker Hub (Recommended)**
+```bash
+docker pull dumanoj/cerberus:latest
+```
+
+**Option B: Build from source**
 ```bash
 git clone https://github.com/manojisnow/cerberus.git
 cd cerberus
@@ -86,11 +104,13 @@ docker build -t cerberus:latest .
 ./scan-repo.sh /path/to/your/repository
 
 # Or use Docker directly
+# If you pulled from Docker Hub, use: dumanoj/cerberus:latest
+# If you built locally, use: cerberus:latest
 docker run --rm \
   --tmpfs /tmp:rw,exec,size=4g \
   -v /path/to/repo:/path/to/repo \
   -v $(pwd)/reports:/cerberus/reports \
-  cerberus:latest /path/to/repo
+  dumanoj/cerberus:latest /path/to/repo
 ```
 
 ### 3. View Reports
@@ -110,9 +130,14 @@ cat reports/cerberus_report_*.md
 | **Gitleaks** | Secrets Detection | API keys, passwords, tokens |
 | **Semgrep** | SAST | SQL injection, XSS, code vulnerabilities |
 | **SpotBugs** | SAST (Java) | Null pointers, resource leaks, security bugs |
-| **Trivy** | Dependencies + IaC | CVEs, vulnerable packages, misconfigurations |
+| **Trivy** | Dependencies + IaC + Containers | CVEs, vulnerable packages, misconfigurations |
+| **Grype** | Container Scanning | Container image vulnerabilities |
 | **Checkov** | IaC Security | Dockerfile, K8s, Terraform issues |
 | **Hadolint** | Dockerfile Linting | Best practices, security issues |
+| **Kubescape** | Kubernetes Security | K8s misconfigurations, compliance checks |
+| **Kubeaudit** | Kubernetes Auditing | Security policy violations |
+| **Helm** | Helm Chart Linting | Chart validation and best practices |
+| **Syft** | SBOM Generation | Software Bill of Materials, dependency analysis |
 
 ## Report Formats
 
@@ -184,11 +209,11 @@ jobs:
       
       - name: Run Cerberus
         run: |
-          docker build -t cerberus:latest .
+          docker pull dumanoj/cerberus:latest
           docker run --rm \
             -v ${{ github.workspace }}:${{ github.workspace }} \
             -v ${{ github.workspace }}/reports:/cerberus/reports \
-            cerberus:latest ${{ github.workspace }}
+            dumanoj/cerberus:latest ${{ github.workspace }}
       
       - name: Upload Reports
         uses: actions/upload-artifact@v4
