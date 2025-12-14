@@ -27,3 +27,6 @@ pytest-cov>=4.1.0
 
 # SAST
 semgrep>=1.59.0
+
+# IaC
+checkov>=3.0.0

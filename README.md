@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="utils/logo.png" alt="Cerberus Logo" width="200" style="border-radius: 50%; border: 4px solid #4a5568;">
+</div>
+
 # 🐕 Cerberus Security Scanner
 
 **Comprehensive security scanning for Java projects with defense-in-depth approach**

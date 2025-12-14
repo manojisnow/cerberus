@@ -84,7 +84,8 @@ class IaCScanner:
                 'checkov',
                 '--directory', repo_path,
                 '--output', 'json',
-                '--quiet'
+                '--quiet',
+                '--skip-path', 'reports'
             ]
             
             result = subprocess.run(

@@ -323,8 +323,13 @@ class ReportGenerator:
 
 <div class="container">
     <div class="header">
-        <h1>🐕 Cerberus Security Report</h1>
-        <p>Comprehensive Safety Analysis</p>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <img src="data:{{ logo_mime }};base64,{{ logo_base64 }}" alt="Cerberus Logo" style="height: 80px; width: 80px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3); object-fit: cover;">
+            <div>
+                <h1 style="margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Cerberus Security Report</h1>
+                <p style="margin: 5px 0 0; opacity: 0.9; font-size: 1.1rem;">Comprehensive Safety Analysis</p>
+            </div>
+        </div>
     </div>
 
     <div class="metadata-grid">
@@ -370,6 +375,47 @@ class ReportGenerator:
                 {% endfor %}
             </tbody>
         </table>
+
+        <!-- Build Status -->
+        {% if results.get('build') %}
+        <h3 style="margin-top: 30px; margin-bottom: 15px;">Build Status</h3>
+        <table class="build-table" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <thead>
+                <tr style="background-color: #f8f9fa; border-bottom: 2px solid #e2e8f0;">
+                    <th style="padding: 12px; text-align: left; font-weight: 600; color: #4a5568;">Type</th>
+                    <th style="padding: 12px; text-align: left; font-weight: 600; color: #4a5568;">Artifact</th>
+                    <th style="padding: 12px; text-align: left; font-weight: 600; color: #4a5568;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tool, items in results['build'].items() %}
+                    {% for item in items %}
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 12px; color: #2d3748; vertical-align: top;">{{ tool|upper }}</td>
+                        <td style="padding: 12px; color: #2d3748; vertical-align: top;">
+                            {% if item.dir %}
+                                {{ item.dir.split('/')[-1] }}
+                            {% else %}
+                                {{ item.image or item.file }}
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px; vertical-align: top;">
+                            <span class="badge" style="background-color: {{ '#48bb78' if item.status == 'success' else '#f56565' }}; color: white; padding: 4px 10px; border-radius: 12px; font-size: 0.85em; font-weight: 600;">
+                                {{ item.status|upper }}
+                            </span>
+                            {% if item.status != 'success' %}
+                            <details style="margin-top: 10px;">
+                                <summary style="cursor: pointer; color: #4299e1; font-size: 0.9em; outline: none;">View Error Log</summary>
+                                <pre style="font-size: 0.8em; text-align: left; max-height: 300px; overflow: auto; background: #2d3748; color: #e2e8f0; padding: 12px; border-radius: 6px; margin-top: 8px; white-space: pre-wrap; font-family: 'Fira Code', monospace;">{{ item.log }}</pre>
+                            </details>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
     </div>
 
     <!-- Sections -->
@@ -540,6 +586,25 @@ class ReportGenerator:
         checkov_html = ReportFormatter.format_checkov_results_html(
             results.get('iac', {}).get('checkov', [])
         )
+
+        # Encode Logo
+        import base64
+        logo_base64 = ""
+        mime_type = "image/jpeg" # default
+        
+        try:
+            # Try PNG first
+            logo_path = Path(__file__).parent / 'logo.png'
+            if logo_path.exists():
+                mime_type = "image/png"
+            else:
+                logo_path = Path(__file__).parent / 'logo.jpg'
+                
+            if logo_path.exists():
+                with open(logo_path, "rb") as image_file:
+                    logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+        except Exception as e:
+            print(f"⚠️ Could not load logo: {e}")
         
         html_content = template.render(
             metadata=metadata,
@@ -548,7 +613,9 @@ class ReportGenerator:
             gitleaks_html=gitleaks_html,
             trivy_deps_html=trivy_deps_html,
             trivy_iac_html=trivy_iac_html,
-            checkov_html=checkov_html
+            checkov_html=checkov_html,
+            logo_base64=logo_base64,
+            logo_mime=mime_type
         )
         
         with open(output_file, 'w') as f:

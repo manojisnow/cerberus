@@ -112,9 +112,9 @@ class Cerberus:
                 click.echo(f"   • {artifact_type}: {len(items)} item(s)")
         
         # Step 3: Build Artifacts (if enabled)
-        if self.config['build']['enabled'] and artifacts.get('build_files'):
+        if self.config['build']['enabled'] and (artifacts.get('build_files') or artifacts.get('dockerfiles')):
             click.echo("\n🔨 Step 3: Building Artifacts")
-            detector.build_artifacts()
+            self.results['build'] = detector.build_artifacts()
         
         # Step 4: Source Code Scanning
         click.echo("\n🔐 Step 4: Source Code Security Scanning")

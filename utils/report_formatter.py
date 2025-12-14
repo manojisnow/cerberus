@@ -58,15 +58,17 @@ class ReportFormatter:
         for result in results:
             target = result.get('Target', 'Unknown')
             vulns = result.get('Vulnerabilities', [])
+            misconfs = result.get('Misconfigurations', [])
             
-            if not vulns:
+            if not vulns and not misconfs:
                 continue
             
             html += f"<h4>{target}</h4>\n"
             html += '<table class="vuln-table">\n'
-            html += '<thead><tr><th>CVE ID</th><th>Severity</th><th>Package</th><th>Installed</th><th>Fixed</th><th>Title</th></tr></thead>\n'
+            html += '<thead><tr><th>ID</th><th>Severity</th><th>Package/Type</th><th>Installed/Msg</th><th>Fixed/Resolution</th><th>Title</th></tr></thead>\n'
             html += '<tbody>\n'
             
+            # Vulnerabilities
             for vuln in vulns:
                 cve_id = vuln.get('VulnerabilityID', 'N/A')
                 severity = vuln.get('Severity', 'UNKNOWN')
@@ -79,6 +81,21 @@ class ReportFormatter:
                 html += f'<tr><td><code>{cve_id}</code></td>'
                 html += f'<td class="{severity_class}"><strong>{severity}</strong></td>'
                 html += f'<td>{pkg_name}</td><td>{installed}</td><td>{fixed}</td>'
+                html += f'<td>{title}</td></tr>\n'
+
+            # Misconfigurations (IaC)
+            for m in misconfs:
+                id = m.get('ID', 'N/A')
+                severity = m.get('Severity', 'UNKNOWN')
+                type_ = m.get('Type', 'IaC')
+                msg = m.get('Message', 'No message')
+                resolution = m.get('Resolution', 'N/A')
+                title = m.get('Title', 'No description')
+                
+                severity_class = f"severity-{severity.lower()}"
+                html += f'<tr><td><code>{id}</code></td>'
+                html += f'<td class="{severity_class}"><strong>{severity}</strong></td>'
+                html += f'<td>{type_}</td><td>{msg}</td><td>{resolution}</td>'
                 html += f'<td>{title}</td></tr>\n'
             
             html += '</tbody>\n</table>\n'

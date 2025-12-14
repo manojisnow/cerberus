@@ -4,7 +4,7 @@
 FROM python:3.11-slim
 
 # Install minimal system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
     wget \
@@ -33,3 +33,7 @@ USER cerberus
 
 ENTRYPOINT ["python3", "/cerberus/cerberus.py"]
 CMD ["--help"]
+
+# Add Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python3 /cerberus/cerberus.py --version || exit 1
