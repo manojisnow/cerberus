@@ -41,7 +41,7 @@ def temp_repo():
 package com.example;
 
 public class TestClass {
-    private static final String API_KEY = "sk-1234567890abcdef";
+    private static final String API_KEY = "TEST_KEY_PLACEHOLDER";
     
     public void vulnerableMethod(String input) {
         // SQL Injection vulnerability
