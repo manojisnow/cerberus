@@ -27,6 +27,7 @@ Cerberus is a Docker-based security scanner that provides comprehensive security
 ✅ **Fast Scans** - ~2.5 minutes for comprehensive analysis  
 ✅ **CI/CD Ready** - GitHub Actions workflow included  
 ✅ **Docker-based** - No local tool installation required  
+✅ **Smart Builds** - Auto-builds Maven/Gradle projects & Dockerfiles for deeper analysis  
 ✅ **Formatted Output** - Clean tables instead of raw JSON  
 
 ## Installation
@@ -148,6 +149,10 @@ Cerberus generates three report formats:
    • build_files: 4 item(s)
    • jar_files: 2 item(s)
 
+🔨 Step 3: Building Artifacts
+   🐳 Building Docker images...
+   ☕ Building Java projects...
+
 🔐 Step 4: Source Code Security Scanning
    🔑 Running secrets detection...
    🐛 Running static application security testing...
@@ -222,6 +227,10 @@ severity:
 
 reporting:
   formats: [json, html, markdown]
+
+build:
+  enabled: true
+  tool: auto  # auto, maven, gradle
 ```
 
 ## Performance
