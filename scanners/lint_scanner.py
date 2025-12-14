@@ -57,11 +57,22 @@ class LintScanner:
                 timeout=60
             )
             
-            # Hadolint returns non-zero if issues found
+            # Hadolint returns 1 if issues found, 0 if clean
+            if result.returncode == 0:
+                status = 'completed'
+            elif result.returncode == 1:
+                status = 'issues_found'
+            else:
+                return {'dockerfile': dockerfile, 'error': f'Hadolint crashed with code {result.returncode}', 'status': 'error'}
+
+            output = result.stdout
+            if not output and status == 'issues_found':
+                 return {'dockerfile': dockerfile, 'error': 'Hadolint returned status 1 but empty output', 'status': 'error'}
+
             return {
                 'dockerfile': dockerfile,
-                'output': result.stdout,
-                'status': 'completed' if result.returncode == 0 else 'issues_found'
+                'output': output,
+                'status': status
             }
                 
         except subprocess.TimeoutExpired:

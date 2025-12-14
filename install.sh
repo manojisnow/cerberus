@@ -110,7 +110,15 @@ install_tools() {
     # Hadolint
     log "Installing Hadolint..."
     if [ "$OS_TYPE" = "darwin" ]; then
-        wget -q "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Darwin-x86_64" -O "$INSTALL_DIR/hadolint"
+        if command -v brew >/dev/null; then
+            log "Using Homebrew to install Hadolint (avoids architecture issues)..."
+            brew install hadolint
+            # Symlink to our bin dir for consistency
+            ln -sf "$(brew --prefix hadolint)/bin/hadolint" "$INSTALL_DIR/hadolint"
+        else
+            log "Homebrew not found. Falling back to binary download (may have issues on M1/M2)..."
+            wget -q "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Darwin-x86_64" -O "$INSTALL_DIR/hadolint"
+        fi
     else
         wget -q "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64" -O "$INSTALL_DIR/hadolint"
     fi
