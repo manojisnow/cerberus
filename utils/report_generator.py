@@ -161,249 +161,361 @@ class ReportGenerator:
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cerberus Security Scan Report</title>
     <style>
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --text: #2d3748;
+            --border: #e2e8f0;
+            --critical: #e53e3e;
+            --high: #dd6b20;
+            --medium: #d69e2e;
+            --low: #38a169;
+            --info: #3182ce;
+        }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             line-height: 1.6;
-            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
         }
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
-            padding: 30px;
-            border-radius: 10px;
+            padding: 40px;
+            border-radius: 12px;
             margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        .header h1 {
-            margin: 0 0 10px 0;
-            font-size: 2.5em;
-        }
-        .metadata {
+        .header h1 { margin: 0; font-size: 2.5rem; }
+        .header p { margin: 10px 0 0; opacity: 0.9; }
+
+        .metadata-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
             margin-bottom: 30px;
         }
-        .metadata-item {
-            background: white;
-            padding: 15px;
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
         }
-        .metadata-item strong {
-            display: block;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-        .summary-table {
-            width: 100%;
-            background: white;
-            border-radius: 8px;
+        .card-label { color: #718096; font-size: 0.875rem; display: block; margin-bottom: 5px; }
+        .card-value { font-weight: 600; font-size: 1.1rem; }
+
+        /* Dashboard Table */
+        .dashboard {
+            background: var(--card-bg);
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 40px;
         }
-        .summary-table table {
+        .dashboard table {
             width: 100%;
             border-collapse: collapse;
         }
-        .summary-table th {
-            background: #667eea;
-            color: white;
-            padding: 15px;
+        .dashboard th {
+            background: #f7fafc;
             text-align: left;
+            padding: 15px 20px;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 1px solid var(--border);
         }
-        .summary-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #eee;
+        .dashboard td {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
         }
-        .summary-table tr:hover {
-            background-color: #f8f9fa;
-        }
-        .severity-critical { color: #dc3545; font-weight: bold; }
-        .severity-high { color: #fd7e14; font-weight: bold; }
-        .severity-medium { color: #ffc107; font-weight: bold; }
-        .severity-low { color: #28a745; }
-        .severity-info { color: #17a2b8; }
-        .section {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .section h2 {
-            color: #667eea;
-            margin-top: 0;
-        }
-        pre {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-x: auto;
-        }
-        .footer {
+        .dashboard tr:last-child td { border-bottom: none; }
+        .dashboard tr:hover { background: #f7fafc; }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            min-width: 30px;
             text-align: center;
-            color: #666;
-            margin-top: 40px;
+        }
+        .bg-critical { background: #fff5f5; color: var(--critical); }
+        .bg-high { background: #fffaf0; color: var(--high); }
+        .bg-medium { background: #fffff0; color: var(--medium); }
+        .bg-low { background: #f0fff4; color: var(--low); }
+        .bg-info { background: #ebf8ff; color: var(--info); }
+        .bg-neutral { background: #edf2f7; color: #718096; }
+
+        /* Collapsible Sections */
+        .collapsible {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        .collapsible-header {
             padding: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            transition: background 0.2s;
+        }
+        .collapsible-header:hover { background: #f7fafc; }
+        .collapsible-header h2 { margin: 0; font-size: 1.25rem; color: #2d3748; }
+        .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+        .collapsible.active .toggle-icon { transform: rotate(180deg); }
+        
+        .collapsible-content {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease;
+            background: #fff;
+            border-top: 1px solid transparent;
+        }
+        .collapsible.active .collapsible-content {
+            padding: 20px;
+            max-height: 5000px; /* Arbitrary large height */
+            border-top: 1px solid var(--border);
+            overflow: visible;
+        }
+
+        /* Scan Content Styling */
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
         }
         .vuln-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 15px 0;
+            font-size: 0.95rem;
         }
-        .vuln-table th {
-            background: #667eea;
-            color: white;
-            padding: 12px;
-            text-align: left;
+        .vuln-table th { background: #e2e8f0; padding: 10px; text-align: left; }
+        .vuln-table td { border-bottom: 1px solid #edf2f7; padding: 10px; vertical-align: top; }
+        
+        .nav-link {
+            text-decoration: none;
+            color: var(--primary);
             font-weight: 600;
         }
-        .vuln-table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #eee;
-        }
-        .vuln-table tr:hover {
-            background-color: #f8f9fa;
-        }
-        .vuln-table code {
-            background: #f8f9fa;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 0.9em;
-        }
+        .nav-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
+
+<div class="container">
     <div class="header">
-        <h1>🐕 Cerberus Security Scan Report</h1>
-        <p>Defense-in-Depth Security Analysis</p>
+        <h1>🐕 Cerberus Security Report</h1>
+        <p>Comprehensive Safety Analysis</p>
     </div>
-    
-    <div class="metadata">
-        <div class="metadata-item">
-            <strong>Repository</strong>
-            {{ metadata.repo_path }}
+
+    <div class="metadata-grid">
+        <div class="card">
+            <span class="card-label">Target Repository</span>
+            <div class="card-value">{{ metadata.repo_path }}</div>
         </div>
-        <div class="metadata-item">
-            <strong>Scan Date</strong>
-            {{ metadata.start_time.strftime('%Y-%m-%d %H:%M:%S') }}
+        <div class="card">
+            <span class="card-label">Scan Date</span>
+            <div class="card-value">{{ metadata.start_time.strftime('%Y-%m-%d %H:%M') }}</div>
         </div>
-        <div class="metadata-item">
-            <strong>Duration</strong>
-            {{ "%.2f"|format(metadata.duration) }} seconds
-        </div>
-        <div class="metadata-item">
-            <strong>Cerberus Version</strong>
-            1.0.0
+        <div class="card">
+            <span class="card-label">Duration</span>
+            <div class="card-value">{{ "%.2f"|format(metadata.duration) }}s</div>
         </div>
     </div>
-    
-    <div class="summary-table">
+
+    <!-- Dashboard -->
+    <div class="dashboard">
         <table>
             <thead>
                 <tr>
-                    <th>Category</th>
-                    <th>Critical</th>
-                    <th>High</th>
-                    <th>Medium</th>
-                    <th>Low</th>
-                    <th>Info</th>
+                    <th>Scanner Category</th>
+                    <th width="10%">Critical</th>
+                    <th width="10%">High</th>
+                    <th width="10%">Medium</th>
+                    <th width="10%">Low</th>
+                    <th width="10%">Info</th>
+                    <th width="15%">Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for category, counts in summary.items() %}
                 <tr>
-                    <td><strong>{{ category.upper() }}</strong></td>
-                    <td class="severity-critical">{{ counts.get('critical', 0) }}</td>
-                    <td class="severity-high">{{ counts.get('high', 0) }}</td>
-                    <td class="severity-medium">{{ counts.get('medium', 0) }}</td>
-                    <td class="severity-low">{{ counts.get('low', 0) }}</td>
-                    <td class="severity-info">{{ counts.get('info', 0) }}</td>
+                    <td><strong>{{ category | upper }}</strong></td>
+                    <td><span class="badge {% if counts.critical %}bg-critical{% else %}bg-neutral{% endif %}">{{ counts.critical }}</span></td>
+                    <td><span class="badge {% if counts.high %}bg-high{% else %}bg-neutral{% endif %}">{{ counts.high }}</span></td>
+                    <td><span class="badge {% if counts.medium %}bg-medium{% else %}bg-neutral{% endif %}">{{ counts.medium }}</span></td>
+                    <td><span class="badge {% if counts.low %}bg-low{% else %}bg-neutral{% endif %}">{{ counts.low }}</span></td>
+                    <td><span class="badge {% if counts.info %}bg-info{% else %}bg-neutral{% endif %}">{{ counts.info }}</span></td>
+                    <td><a href="#section-{{ category }}" class="nav-link" onclick="openSection('section-{{ category }}')">View Details →</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-    
-    <div class="section">
-        <h2>Detailed Findings</h2>
+
+    <!-- Sections -->
+    <div id="sections">
+        
+        <!-- SECRETS -->
         {% if results.get('secrets') %}
-            <h3>SECRETS</h3>
-            {% if results['secrets'].get('gitleaks') %}
-                <h4>Gitleaks</h4>
-                {{ gitleaks_html | safe }}
-            {% endif %}
-        {% endif %}
-        
-        {% if results.get('dependencies') %}
-            <h3>DEPENDENCIES</h3>
-            {% if results['dependencies'].get('trivy') %}
-                <h4>Trivy</h4>
-                {{ trivy_deps_html | safe }}
-            {% endif %}
-        {% endif %}
-        
-        {% if results.get('iac') %}
-            <h3>INFRASTRUCTURE AS CODE</h3>
-            {% if results['iac'].get('trivy') %}
-                <h4>Trivy</h4>
-                {{ trivy_iac_html | safe }}
-            {% endif %}
-            {% if results['iac'].get('checkov') %}
-                <h4>Checkov</h4>
-                {{ checkov_html | safe }}
-            {% endif %}
+        <div id="section-secrets" class="collapsible">
+            <div class="collapsible-header" onclick="toggleSection(this.parentElement)">
+                <h2>Secrets Detection (Gitleaks)</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="collapsible-content">
+                {% if results['secrets'].get('gitleaks') %}
+                    {{ gitleaks_html | safe }}
+                {% else %}
+                    <p>No secrets detected.</p>
+                {% endif %}
+            </div>
+        </div>
         {% endif %}
 
+        <!-- DEPENDENCIES -->
+        {% if results.get('dependencies') %}
+        <div id="section-dependencies" class="collapsible">
+            <div class="collapsible-header" onclick="toggleSection(this.parentElement)">
+                <h2>Vulnerable Dependencies (Trivy)</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="collapsible-content">
+                {% if results['dependencies'].get('trivy') %}
+                    {{ trivy_deps_html | safe }}
+                {% else %}
+                    <p>No dependency vulnerabilities detected.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- IAC -->
+        {% if results.get('iac') %}
+        <div id="section-iac" class="collapsible">
+            <div class="collapsible-header" onclick="toggleSection(this.parentElement)">
+                <h2>Infrastructure as Code (Trivy/Checkov)</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="collapsible-content">
+                {% if results['iac'].get('trivy') %}
+                    <h4>Trivy IaC</h4>
+                    {{ trivy_iac_html | safe }}
+                {% endif %}
+                {% if results['iac'].get('checkov') %}
+                    <h4>Checkov</h4>
+                    {{ checkov_html | safe }}
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- CONSISTENCY -->
         {% if results.get('consistency') %}
-            <h3>DEPENDENCY CONSISTENCY</h3>
-            {% if results['consistency'].get('findings') %}
-                <div class="vuln-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Package</th>
-                            <th>Versions Detected</th>
-                            <th>Severity</th>
-                            <th>Remediation</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for finding in results['consistency']['findings'] %}
-                        <tr>
-                            <td>{{ finding.package }} ({{ finding.type }})</td>
-                            <td>{{ ", ".join(finding.versions) }}</td>
-                            <td class="severity-medium">{{ finding.severity }}</td>
-                            <td>{{ finding.remediation }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                </div>
-            {% else %}
-                <p>No consistency issues found.</p>
-            {% endif %}
+        <div id="section-consistency" class="collapsible">
+            <div class="collapsible-header" onclick="toggleSection(this.parentElement)">
+                <h2>Dependency Consistency (Diamond Dependencies)</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="collapsible-content">
+                {% if results['consistency'].get('findings') %}
+                    <div class="vuln-table-wrapper">
+                    <table class="vuln-table">
+                        <thead>
+                            <tr>
+                                <th>Package</th>
+                                <th>Versions Detected</th>
+                                <th>Severity</th>
+                                <th>Remediation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for finding in results['consistency']['findings'] %}
+                            <tr>
+                                <td><strong>{{ finding.package }}</strong> <br><small>{{ finding.type }}</small></td>
+                                <td>{{ ", ".join(finding.versions) }}</td>
+                                <td><span class="badge bg-medium">{{ finding.severity }}</span></td>
+                                <td>{{ finding.remediation }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                {% else %}
+                    <p>No consistency issues found. All dependencies are aligned.</p>
+                {% endif %}
+            </div>
+        </div>
         {% endif %}
-        
+
+        <!-- SAST -->
         {% if results.get('sast') %}
-            <h3>SAST</h3>
-            <pre>{{ results['sast'] | tojson(indent=2) }}</pre>
+        <div id="section-sast" class="collapsible">
+            <div class="collapsible-header" onclick="toggleSection(this.parentElement)">
+                <h2>Static Code Analysis (SAST)</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <p>Raw JSON Results:</p>
+                <pre>{{ results['sast'] | tojson(indent=2) }}</pre>
+            </div>
+        </div>
         {% endif %}
-        
+
+        <!-- LINTING -->
         {% if results.get('linting') %}
-            <h3>LINTING</h3>
-            <pre>{{ results['linting'] | tojson(indent=2) }}</pre>
+        <div id="section-linting" class="collapsible">
+            <div class="collapsible-header" onclick="toggleSection(this.parentElement)">
+                <h2>Docker Linting (Hadolint)</h2>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <pre>{{ results['linting'] | tojson(indent=2) }}</pre>
+            </div>
+        </div>
         {% endif %}
+
     </div>
     
-    <div class="footer">
-        <p>Report generated by <strong>Cerberus Security Scanner v1.0.0</strong></p>
+    <div style="text-align: center; margin-top: 50px; color: #718096;">
+        <p>Report generated by <strong>Cerberus v1.0.0</strong></p>
     </div>
+
+</div>
+
+<script>
+    function toggleSection(element) {
+        element.classList.toggle("active");
+    }
+
+    function openSection(id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.classList.add("active");
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+</script>
+
 </body>
 </html>
 """
@@ -456,18 +568,97 @@ class ReportGenerator:
         """
         summary = {}
         
-        for scanner_name, scanner_results in results.items():
-            summary[scanner_name] = {
-                'critical': 0,
-                'high': 0,
-                'medium': 0,
-                'low': 0,
-                'info': 0
+        # Initialize structure for all expected scanners
+        for scanner in ['secrets', 'dependencies', 'iac', 'sast', 'containers', 'helm', 'linting', 'consistency']:
+            summary[scanner] = {
+                'critical': 0, 'high': 0, 'medium': 0, 'low': 0, 'info': 0
             }
-            
-            # This is a placeholder - actual implementation would parse
-            # scanner-specific result formats
-            if isinstance(scanner_results, dict):
-                summary[scanner_name]['info'] = len(scanner_results)
+
+        # 1. Secrets (Gitleaks)
+        if results.get('secrets', {}).get('gitleaks'):
+            # Gitleaks findings are usually High/Critical. We'll count them as High by default if not specified
+            findings = results['secrets']['gitleaks']
+            summary['secrets']['high'] = len(findings)
+
+        # 2. Dependencies (Trivy)
+        if results.get('dependencies', {}).get('trivy', {}).get('Results'):
+            for result in results['dependencies']['trivy']['Results']:
+                if 'Vulnerabilities' in result:
+                    for vuln in result['Vulnerabilities']:
+                        severity = vuln.get('Severity', 'UNKNOWN').lower()
+                        if severity in summary['dependencies']:
+                            summary['dependencies'][severity] += 1
+                        else:
+                            summary['dependencies']['info'] += 1
+
+        # 3. IaC (Trivy & Checkov)
+        # Trivy IaC
+        if results.get('iac', {}).get('trivy', {}).get('Results'):
+             for result in results['iac']['trivy']['Results']:
+                if 'Misconfigurations' in result:
+                    for misconf in result['Misconfigurations']:
+                        severity = misconf.get('Severity', 'UNKNOWN').lower()
+                        if severity in summary['iac']:
+                            summary['iac'][severity] += 1
+                        else:
+                            summary['iac']['info'] += 1
+        # Checkov
+        if results.get('iac', {}).get('checkov'):
+            # Checkov format varies, assuming list of failed checks if structured simplified
+            # Or if raw checkov output, we parse 'results' -> 'failed_checks'
+            # For simplicity in this version, we count failures as Medium
+            checkov_res = results['iac']['checkov']
+            if isinstance(checkov_res, list):
+                 summary['iac']['medium'] += len(checkov_res)
+            elif isinstance(checkov_res, dict) and 'results' in checkov_res:
+                 summary['iac']['medium'] += len(checkov_res.get('results', {}).get('failed_checks', []))
+
+        # 4. Consistency
+        if results.get('consistency', {}).get('findings'):
+            for finding in results['consistency']['findings']:
+                severity = finding.get('severity', 'medium').lower()
+                if severity in summary['consistency']:
+                    summary['consistency'][severity] += 1
+                else:
+                    summary['consistency']['info'] += 1
+
+        # 5. SAST (Semgrep / SpotBugs)
+        if results.get('sast'):
+            # This depends on how SAST results are structured. 
+            # Assuming simplified list or dict structure from scanners
+            sast_res = results['sast']
+            # Semgrep
+            if isinstance(sast_res, dict) and 'results' in sast_res: # Standard Semgrep JSON
+                for finding in sast_res['results']:
+                    severity = finding.get('extra', {}).get('severity', 'medium').lower()
+                    # Map semgrep severity (ERROR, WARNING, INFO) -> (High, Medium, Info)
+                    if severity == 'error': summary['sast']['high'] += 1
+                    elif severity == 'warning': summary['sast']['medium'] += 1
+                    else: summary['sast']['info'] += 1
+            # SpotBugs (simplified logic: if list of strings/dicts)
+            # If our scanner returns raw text, we count as info. If dict list:
+            elif isinstance(sast_res, list):
+                 summary['sast']['medium'] += len(sast_res)
+            elif isinstance(sast_res, dict) and 'spotbugs' in sast_res:
+                 # If we structured it 'spotbugs': {'findings': []}
+                 if isinstance(sast_res['spotbugs'], dict) and 'findings' in sast_res['spotbugs']:
+                     summary['sast']['medium'] += len(sast_res['spotbugs']['findings'])
         
+        # 6. Linting (Hadolint)
+        if results.get('linting'):
+            lint_res = results['linting']
+            # If unified dict
+            if isinstance(lint_res, dict):
+                # Check for bad patterns or hadolint list
+                if 'hadolint' in lint_res:
+                     for file_res in lint_res['hadolint']:
+                         if file_res.get('status') == 'issues_found':
+                             # Parse output to count? Or just count files?
+                             # Let's count total issues if possible, or just files as "Low".
+                             # Parsing the JSON string in 'output' is expensive here effectively double parsing
+                             # For now, count 1 per file with issues as "Low"
+                             summary['linting']['low'] += 1
+            elif isinstance(lint_res, list):
+                summary['linting']['info'] += len(lint_res)
+
         return summary
